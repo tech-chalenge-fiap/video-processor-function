@@ -1,0 +1,6 @@
+dist
+node_modules
+.serverless
+ffmpeg-static
+ffmpeg
+.env
