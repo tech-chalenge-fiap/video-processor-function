@@ -13,7 +13,7 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@types/ffmpeg": "^1.0.7",
+    "@types/fluent-ffmpeg": "^2.1.27",
     "serverless": "^3.38.0",
     "serverless-deployment-bucket": "^1.6.0",
     "serverless-plugin-typescript": "^2.1.0",
@@ -23,7 +23,7 @@
     "@ffmpeg-installer/ffmpeg": "^1.1.0",
     "aws-sdk": "^2.1692.0",
     "dotenv": "^16.4.7",
-    "ffmpeg": "^0.0.4",
-    "ffmpeg-static": "^5.2.0"
+    "ffmpeg-static": "^5.2.0",
+    "fluent-ffmpeg": "^2.1.3"
   }
 }

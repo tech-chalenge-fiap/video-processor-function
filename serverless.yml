@@ -1,4 +1,5 @@
 service: video-processor-function
+useDotenv: true
 
 frameworkVersion: "3.39"
 
@@ -48,7 +49,7 @@ resources:
 
 functions:
   video-processor:
-    handler: src/videoProcessor.main
+    handler: src/videoProcessor/videoProcessor.main
     environment:
       CLOUD_ACCESS_KEY: ${env:CLOUD_ACCESS_KEY}
       CLOUD_SECRET_KEY: ${env:CLOUD_SECRET_KEY}
@@ -64,7 +65,7 @@ functions:
           batchSize: 1
 
   send-mail:
-    handler: src/sendMail.main
+    handler: src/mailer/sendMail.main
     environment:
       CLOUD_ACCESS_KEY: ${env:CLOUD_ACCESS_KEY}
       CLOUD_SECRET_KEY: ${env:CLOUD_SECRET_KEY}
