@@ -39,6 +39,11 @@ resources:
 functions:
   video-processor:
     handler: src/videoProcessor.main
+    environment:
+      CLOUD_ACCESS_KEY: ${env:CLOUD_ACCESS_KEY}
+      CLOUD_SECRET_KEY: ${env:CLOUD_SECRET_KEY}
+      CLOUD_REGION: ${env:CLOUD_REGION}
+      CLOUD_EMAIL: ${env:CLOUD_EMAIL}
     events:
       - sqs:
           arn:
@@ -49,6 +54,11 @@ functions:
 
   send-mail:
     handler: src/sendMail.main
+    environment:
+      CLOUD_ACCESS_KEY: ${env:CLOUD_ACCESS_KEY}
+      CLOUD_SECRET_KEY: ${env:CLOUD_SECRET_KEY}
+      CLOUD_REGION: ${env:CLOUD_REGION}
+      CLOUD_EMAIL: ${env:CLOUD_EMAIL}
     events:
       - sqs:
           arn:
