@@ -26,6 +26,8 @@ export const main = async (event: any): Promise<boolean> => {
     console.log('ffmpegPath', ffmpegStatic)
 
     const record = event.Records[0]
+    console.log('event -> ', JSON.stringify(event))
+    console.log('record -> ', JSON.stringify(record))
     const { fileKey } = JSON.parse(JSON.stringify(record.body))
 
     if (!event) {
