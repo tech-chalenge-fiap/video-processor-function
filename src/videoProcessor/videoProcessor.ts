@@ -32,7 +32,7 @@ export const main = async (event: any): Promise<boolean> => {
       throw new Error('Evento não informado')
     }
 
-    const tmpDir = path.join(__dirname, 'tmp');
+    const tmpDir = path.join('/tmp', 'video-processor')
 
     if (!fs.existsSync(tmpDir)) {
       fs.mkdirSync(tmpDir)
