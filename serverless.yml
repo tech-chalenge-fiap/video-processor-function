@@ -10,12 +10,48 @@ provider:
     - Effect: "Allow"
       Action:
         - "lambda:*"
+        - "sqs:*"
       Resource: "*"
-
 
 plugins:
   - serverless-plugin-typescript
 
+resources:
+  Resources:
+    VideoProcessorQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: video-processor-queue
+        RedrivePolicy:
+          deadLetterTargetArn:
+            Fn::GetAtt:
+              - VideoProcessorDLQ
+              - Arn
+          maxReceiveCount: 3
+
+    VideoProcessorDLQ:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: video-processor-dlq
+
 functions:
   video-processor:
-    handler: src/handler.main
+    handler: src/videoProcessor.main
+    events:
+      - sqs:
+          arn:
+            Fn::GetAtt:
+              - VideoProcessorQueue
+              - Arn
+          batchSize: 1
+
+  send-mail:
+    handler: src/sendMail.main
+    events:
+      - sqs:
+          arn:
+            Fn::GetAtt:
+              - VideoProcessorDLQ
+              - Arn
+          batchSize: 1
+
