@@ -20,6 +20,10 @@ provider:
       Resource:
         - "arn:aws:s3:::${env:CLOUD_STORAGE_BUCKET}/*"
 
+package:
+  patterns:
+    - node_modules/@ffmpeg-installer/**
+
 plugins:
   - serverless-plugin-typescript
 
