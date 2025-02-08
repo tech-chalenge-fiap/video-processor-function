@@ -25,13 +25,17 @@ export const main = async (event: any): Promise<boolean> => {
     ffmpeg.setFfmpegPath(ffmpegStatic as string)
     console.log('ffmpegPath', ffmpegStatic)
 
-    const record = event.Records[0]
-    console.log('event -> ', JSON.stringify(event))
-    console.log('record -> ', JSON.stringify(record))
-    const { fileKey } = JSON.parse(JSON.stringify(record.body))
-
     if (!event) {
       throw new Error('Evento não informado')
+    }
+
+    const record = event.Records[0]
+
+    const body = typeof record.body === 'string' ? JSON.parse(record.body) : record.body
+    const { fileKey } = body
+
+    if (!body.fileKey) {
+      throw new Error('fileKey não informado')
     }
 
     const tmpDir = path.join('/tmp', 'video-processor')
@@ -41,7 +45,6 @@ export const main = async (event: any): Promise<boolean> => {
     } else {
       console.log(`Directory ${tmpDir} already exists. No need to create.`);
     }
-    console.log('fileKey -> ', fileKey) 
 
     const videoPath = path.join(tmpDir, `video.${fileKey.split('.')[1]}`)
 
