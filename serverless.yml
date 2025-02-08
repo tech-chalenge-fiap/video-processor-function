@@ -44,6 +44,7 @@ functions:
       CLOUD_SECRET_KEY: ${env:CLOUD_SECRET_KEY}
       CLOUD_REGION: ${env:CLOUD_REGION}
       CLOUD_EMAIL: ${env:CLOUD_EMAIL}
+      CLOUD_STORAGE_BUCKET: ${env:CLOUD_STORAGE_BUCKET}
     events:
       - sqs:
           arn:
