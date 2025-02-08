@@ -24,7 +24,9 @@ export const main = async (event: IVideoProcessorEvent): Promise<boolean> => {
 
   try {
     const record = event.Records[0]
-    const { email, fileName, success, signedUrl } = JSON.parse(JSON.stringify(record.body))
+    const body = typeof record.body === 'string' ? JSON.parse(record.body) : record.body
+
+    const { email, fileName, success, signedUrl } = body
 
     const { Body, Subject } = templates[success ? 'success' : 'fail']
 
