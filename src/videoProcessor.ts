@@ -22,6 +22,13 @@ export const main = async (event: any): Promise<boolean> => {
   try {
     console.log('ffmpegPath', ffpmegStatic.path)
 
+    // logs para listar arquivos e diretórios
+    console.log('Listing files in /var/task:')
+    execSync('ls -l /var/task', { stdio: 'inherit' })
+
+    console.log('Listing files in /var/task/node_modules/@ffmpeg-installer:')
+    execSync('ls -l /var/task/node_modules/@ffmpeg-installer', { stdio: 'inherit' })
+
     const { fileKey } = JSON.parse(JSON.stringify(event.Records[0].body))
 
     if (!event) {
@@ -57,7 +64,6 @@ export const main = async (event: any): Promise<boolean> => {
       console.log(`Directory ${framesDir} already exists. No need to create.`);
     }
 
-
     new ffmpeg(videoPath, (err, video) => {
       if (err) {
         console.log('Error: ' + err)
@@ -87,8 +93,8 @@ export const main = async (event: any): Promise<boolean> => {
 
     return true
 
-
   } catch (error) {
+    console.error('Error:', error)
     throw new Error(JSON.stringify(error))
   }
 }
