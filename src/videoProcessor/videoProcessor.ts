@@ -3,10 +3,11 @@ import dotenv from "dotenv"
 
 dotenv.config()
 import { execSync } from "child_process"
+import * as sendMail from '../mailer/sendMail'
 import fs from "fs"
 import path from "path"
-import ffmpeg from 'ffmpeg'
-import ffpmegStatic from '@ffmpeg-installer/ffmpeg'
+import ffmpeg from 'fluent-ffmpeg'
+import ffmpegInstaller from '@ffmpeg-installer/ffmpeg'
 
 interface IEvent {
   videoId: number,
@@ -20,16 +21,10 @@ const s3 = new AWS.S3({
 
 export const main = async (event: any): Promise<boolean> => {
   try {
-    console.log('ffmpegPath', ffpmegStatic.path)
+    ffmpeg.setFfmpegPath(ffmpegInstaller.path)
 
-    // logs para listar arquivos e diretórios
-    console.log('Listing files in /var/task:')
-    execSync('ls -l /var/task', { stdio: 'inherit' })
-
-    console.log('Listing files in /var/task/node_modules/@ffmpeg-installer:')
-    execSync('ls -l /var/task/node_modules/@ffmpeg-installer', { stdio: 'inherit' })
-
-    const { fileKey } = JSON.parse(JSON.stringify(event.Records[0].body))
+    const record = event.Records[0]
+    const { fileKey } = JSON.parse(JSON.stringify(record.body))
 
     if (!event) {
       throw new Error('Evento não informado')
@@ -43,7 +38,7 @@ export const main = async (event: any): Promise<boolean> => {
       console.log(`Directory ${tmpDir} already exists. No need to create.`);
     }
 
-    const videoPath = path.join(tmpDir, 'video.mp4');
+    const videoPath = path.join(tmpDir, `video.${fileKey.split('.')[1]}`)
 
     const videoData = await s3.getObject({
       Bucket: process.env.CLOUD_STORAGE_BUCKET ?? '',
@@ -64,18 +59,13 @@ export const main = async (event: any): Promise<boolean> => {
       console.log(`Directory ${framesDir} already exists. No need to create.`);
     }
 
-    new ffmpeg(videoPath, (err, video) => {
-      if (err) {
-        console.log('Error: ' + err)
-      }
-
-      video.fnExtractFrameToJPG(framesDir, {
-        frame_rate: 20,
-        file_name: 'my_frame_%t_%s'
-      }, (error, files) => {
-        if (error) console.log('Error: ' + error)
-      })
-
+    await new Promise((resolve, reject) => {
+      ffmpeg(videoPath)
+        .on('end', resolve)
+        .on('error', reject)
+        .output(path.join(framesDir, 'frame_%04d.jpg'))
+        .outputOptions('-vf', 'fps=20')
+        .run()
     })
 
     const zipPath = path.join(tmpDir, 'output.zip')
@@ -90,6 +80,25 @@ export const main = async (event: any): Promise<boolean> => {
       Key: zipKey,
       Body: zipFile
     }).promise()
+
+    const signedUrl = await s3.getSignedUrlPromise('getObject', {
+      Bucket: process.env.CLOUD_STORAGE_BUCKET ?? '',
+      Key: zipKey,
+      Expires: 60 * 5
+    })
+
+    if (signedUrl) {
+      await sendMail.main({
+        ...event,
+        Records: [{
+          body: {
+            ...record.body,
+            success: true,
+            signedUrl
+          }
+        }]
+      })
+    }
 
     return true
 
