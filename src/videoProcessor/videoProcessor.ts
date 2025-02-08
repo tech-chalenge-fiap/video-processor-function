@@ -9,9 +9,16 @@ import ffmpeg from 'fluent-ffmpeg'
 import ffmpegStatic from 'ffmpeg-static'
 import archiver from 'archiver'
 
-interface IEvent {
-  videoId: number,
-  fileKey: string
+export interface IVideoProcessorEvent {
+  Records: Array<{
+    body: {
+      email: string
+      fileName: string
+      fileKey: string
+      success?: boolean
+      signedUrl?: string
+    }
+  }>
 }
 
 const s3 = new AWS.S3({
@@ -19,7 +26,7 @@ const s3 = new AWS.S3({
   secretAccessKey: process.env.CLOUD_SECRET_KEY,
 })
 
-export const main = async (event: any): Promise<boolean> => {
+export const main = async (event: IVideoProcessorEvent): Promise<boolean> => {
   try {
     // Configurar o caminho do binário ffmpeg
     ffmpeg.setFfmpegPath(ffmpegStatic as string)

@@ -1,19 +1,9 @@
 import AWS from "aws-sdk"
 import dotenv from "dotenv"
 import { templates } from "./mailTemplatesHelper"
+import { IVideoProcessorEvent } from "../videoProcessor/videoProcessor"
 
 dotenv.config()
-
-interface IVideoProcessorEvent {
-  Records: Array<{
-    body: {
-      email: string
-      fileName: string
-      success?: boolean
-      signedUrl?: string
-    }
-  }>
-}
 
 export const main = async (event: IVideoProcessorEvent): Promise<boolean> => {
   const ses = new AWS.SES({
