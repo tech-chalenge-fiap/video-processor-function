@@ -7,7 +7,7 @@ import * as sendMail from '../mailer/sendMail'
 import fs from "fs"
 import path from "path"
 import ffmpeg from 'fluent-ffmpeg'
-import ffmpegInstaller from '@ffmpeg-installer/ffmpeg'
+import ffmpegStatic from 'ffmpeg-static'
 
 interface IEvent {
   videoId: number,
@@ -21,7 +21,9 @@ const s3 = new AWS.S3({
 
 export const main = async (event: any): Promise<boolean> => {
   try {
-    ffmpeg.setFfmpegPath(ffmpegInstaller.path)
+    // Configurar o caminho do binário ffmpeg
+    ffmpeg.setFfmpegPath(ffmpegStatic as string)
+    console.log('ffmpegPath', ffmpegStatic)
 
     const record = event.Records[0]
     const { fileKey } = JSON.parse(JSON.stringify(record.body))

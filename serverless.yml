@@ -24,7 +24,7 @@ provider:
 package:
   individually: true
   patterns:
-    - node_modules/@ffmpeg-installer/**
+    - node_modules/ffmpeg-static/**
 
 plugins:
   - serverless-plugin-typescript
@@ -53,7 +53,7 @@ functions:
     handler: src/videoProcessor/videoProcessor.main
     package:
       patterns:
-        - node_modules/@ffmpeg-installer/** # Incluir o ffmpeg apenas para esta função
+        - node_modules/ffmpeg-static/**
     environment:
       CLOUD_ACCESS_KEY: ${env:CLOUD_ACCESS_KEY}
       CLOUD_SECRET_KEY: ${env:CLOUD_SECRET_KEY}
