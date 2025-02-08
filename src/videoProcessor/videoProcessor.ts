@@ -39,6 +39,7 @@ export const main = async (event: any): Promise<boolean> => {
     } else {
       console.log(`Directory ${tmpDir} already exists. No need to create.`);
     }
+    console.log('fileKey -> ', fileKey) 
 
     const videoPath = path.join(tmpDir, `video.${fileKey.split('.')[1]}`)
 
