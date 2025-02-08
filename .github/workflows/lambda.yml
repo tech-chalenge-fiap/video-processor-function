@@ -32,5 +32,6 @@ jobs:
           CLOUD_SECRET_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           CLOUD_REGION: ${{ secrets.CLOUD_REGION }}
           CLOUD_EMAIL: ${{ secrets.CLOUD_EMAIL }}
+          CLOUD_STORAGE_BUCKET: ${{ secrets.CLOUD_STORAGE_BUCKET }}
         run: serverless deploy
 
