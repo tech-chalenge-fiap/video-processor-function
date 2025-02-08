@@ -16,7 +16,7 @@ export const main = async (event: any): Promise<boolean> => {
     console.log('eventParams', {
       email,
       fileName,
-      event
+      event: JSON.stringify(event)
     })
     if (!email || !fileName) {
       throw new Error('Faltam informações para enviar o email')
