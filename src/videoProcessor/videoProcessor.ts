@@ -2,12 +2,12 @@ import AWS from "aws-sdk"
 import dotenv from "dotenv"
 
 dotenv.config()
-import { execSync } from "child_process"
 import * as sendMail from '../mailer/sendMail'
 import fs from "fs"
 import path from "path"
 import ffmpeg from 'fluent-ffmpeg'
 import ffmpegStatic from 'ffmpeg-static'
+import archiver from 'archiver'
 
 interface IEvent {
   videoId: number,
@@ -77,7 +77,22 @@ export const main = async (event: any): Promise<boolean> => {
     })
 
     const zipPath = path.join(tmpDir, 'output.zip')
-    execSync(`cd ${framesDir} && zip -r ${zipPath} .`)
+    const output = fs.createWriteStream(zipPath)
+    const archive = archiver('zip', {
+      zlib: { level: 9 }
+    })
+
+    output.on('close', () => {
+      console.log(`Created zip file with ${archive.pointer()} total bytes`)
+    })
+
+    archive.on('error', (err) => {
+      throw err
+    })
+
+    archive.pipe(output)
+    archive.directory(framesDir, false)
+    await archive.finalize()
 
     const zipKey = `processed/${fileKey.split('.')[0]}.zip`
 
@@ -100,7 +115,7 @@ export const main = async (event: any): Promise<boolean> => {
         ...event,
         Records: [{
           body: {
-            ...record.body,
+            ...body,
             success: true,
             signedUrl
           }
