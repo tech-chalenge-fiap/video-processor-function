@@ -11,13 +11,15 @@ export const main = async (event: any): Promise<boolean> => {
   })
 
   try {
-    const { email, fileName } = JSON.parse(JSON.stringify(event.Records[0].body))
+    const record = event.Records[0]
+    const { email, fileName } = JSON.parse(record.body)
 
     console.log('eventParams', {
       email,
       fileName,
       event: JSON.stringify(event)
     })
+
     if (!email || !fileName) {
       throw new Error('Faltam informações para enviar o email')
     }
