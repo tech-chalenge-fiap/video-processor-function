@@ -22,6 +22,7 @@ provider:
         - "arn:aws:s3:::${env:CLOUD_STORAGE_BUCKET}/*"
 
 package:
+  individually: true
   patterns:
     - node_modules/@ffmpeg-installer/**
 
@@ -50,6 +51,9 @@ resources:
 functions:
   video-processor:
     handler: src/videoProcessor/videoProcessor.main
+    package:
+      patterns:
+        - node_modules/@ffmpeg-installer/** # Incluir o ffmpeg apenas para esta função
     environment:
       CLOUD_ACCESS_KEY: ${env:CLOUD_ACCESS_KEY}
       CLOUD_SECRET_KEY: ${env:CLOUD_SECRET_KEY}
