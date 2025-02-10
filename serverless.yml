@@ -35,7 +35,7 @@ resources:
       Type: AWS::SQS::Queue
       Properties:
         QueueName: video-processor-queue
-        VisibilityTimeout: 30
+        VisibilityTimeout: 60
         RedrivePolicy:
           deadLetterTargetArn:
             Fn::GetAtt:
