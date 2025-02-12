@@ -85,21 +85,23 @@ export const main = async (event: IVideoProcessorEvent): Promise<boolean> => {
 
     const zipPath = path.join(tmpDir, 'output.zip')
     const output = fs.createWriteStream(zipPath)
+
     const archive = archiver('zip', {
       zlib: { level: 9 }
     })
 
-    output.on('close', () => {
-      console.log(`Created zip file with ${archive.pointer()} total bytes`)
-    })
+    await new Promise<void>((resolve, reject) => {
+      output.on('close', () => {
+        console.log(`Created zip file with ${archive.pointer()} total bytes`)
+        resolve()
+      })
 
-    archive.on('error', (err) => {
-      throw err
-    })
+      output.on('error', (err) => reject(err))
 
-    archive.pipe(output)
-    archive.directory(framesDir, false)
-    await archive.finalize()
+      archive.pipe(output)
+      archive.directory(framesDir, false)
+      archive.finalize()
+    })
 
     const zipKey = `processed/${fileKey.split('.')[0]}.zip`
 
