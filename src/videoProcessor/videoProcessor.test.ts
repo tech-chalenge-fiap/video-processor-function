@@ -1,82 +1,107 @@
-import { main, IVideoProcessorEvent } from './videoProcessor';
-import * as sendMail from '../mailer/sendMail';
+import { main } from './videoProcessor'
+import AWS from 'aws-sdk'
+import fs from 'fs'
+import path from 'path'
+import ffmpeg from 'fluent-ffmpeg'
+import archiver from 'archiver'
+import * as sendMail from '../mailer/sendMail'
 
-jest.mock('aws-sdk', () => {
-  const s3Mock = {
-    getObject: jest.fn(() => ({
-      promise: jest.fn().mockResolvedValue({
-        Body: Buffer.from('dummy video content')
-      })
-    })),
-    upload: jest.fn(() => ({
-      promise: jest.fn().mockResolvedValue({})
-    })),
-    getSignedUrlPromise: jest.fn().mockResolvedValue('http://signed.url')
-  };
+jest.mock('aws-sdk')
+jest.mock('fs')
+jest.mock('fluent-ffmpeg')
+jest.mock('archiver')
+jest.mock('../mailer/sendMail')
 
-  return {
-    S3: jest.fn(() => s3Mock)
-  };
-});
+describe('Video Processor', () => {
+  const s3Mock = AWS.S3 as jest.MockedClass<typeof AWS.S3>
+  const sendMailMock = sendMail.main as jest.MockedFunction<typeof sendMail.main>
+  const fsMock = fs as jest.Mocked<typeof fs>
 
-jest.mock('fluent-ffmpeg', () => {
-  const listeners: Record<string, (err?: Error) => void> = {};
-  const ffmpegMock: any = jest.fn(() => ({
-    on: function (event: string, callback: (err?: Error) => void) {
-      listeners[event] = callback;
-      return this;
-    },
-    output: function () {
-      return this;
-    },
-    outputOptions: function () {
-      return this;
-    },
-    run: function () {
-      setImmediate(() => {
-        if (listeners['end']) {
-          listeners['end']();
-        }
-      });
-    },
-  }));
-
-  ffmpegMock.setFfmpegPath = jest.fn();
-
-  return ffmpegMock;
-});
-
-jest.mock('../mailer/sendMail', () => ({
-  main: jest.fn().mockResolvedValue(true)
-}));
-
-describe('Video Processor main function', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
-  });
+    jest.clearAllMocks()
+  })
 
-  it('should process video and send mail successfully', async () => {
-    const event: IVideoProcessorEvent = {
-      Records: [{
-        body: {
-          email: 'test@example.com',
-          fileName: 'video.mp4',
-          fileKey: 'video.mp4'
-        }
-      }]
-    };
+  it('should process the video successfully', async () => {
+    const event = {
+      Records: [
+        {
+          body: JSON.stringify({
+            email: 'test@example.com',
+            fileName: 'video.mp4',
+            fileKey: 'videos/video.mp4',
+          }), // Make sure to stringify this correctly
+        },
+      ],
+    }
 
-    const result = await main(event);
-    expect(result).toBe(true);
+    // Mocking S3 methods
+    const getObjectMock = jest.fn().mockReturnValue({
+      promise: jest.fn().mockResolvedValue({
+        Body: Buffer.from('video content'),
+      }),
+    })
 
-    expect(sendMail.main).toHaveBeenCalledTimes(1);
-    const sendMailArg = (sendMail.main as jest.Mock).mock.calls[0][0];
-    expect(sendMailArg.Records[0].body).toMatchObject({
-      email: 'test@example.com',
-      fileName: 'video.mp4',
-      fileKey: 'video.mp4',
-      success: true,
-      signedUrl: 'http://signed.url'
-    });
-  });
-});
+    const uploadMock = jest.fn().mockReturnValue({
+      promise: jest.fn().mockResolvedValue({}),
+    })
+
+    const getSignedUrlMock = jest.fn().mockResolvedValue('https://signedurl.com')
+
+    s3Mock.prototype.getObject = getObjectMock
+    s3Mock.prototype.upload = uploadMock
+    s3Mock.prototype.getSignedUrlPromise = getSignedUrlMock
+
+    // Mocking fs methods
+    fsMock.existsSync.mockReturnValue(false)
+    fsMock.mkdirSync.mockImplementation(() => undefined)
+    fsMock.writeFileSync.mockImplementation(() => {})
+    fsMock.readFileSync.mockReturnValue(Buffer.from('zip content'))
+
+    // Mocking ffmpeg as a function
+    const ffmpegMock = ffmpeg as jest.MockedFunction<typeof ffmpeg>
+    
+    // Mocking the required methods used in your code
+    const ffmpegCommandMock = {
+      on: jest.fn().mockReturnThis(),
+      output: jest.fn().mockReturnThis(),
+      outputOptions: jest.fn().mockReturnThis(),
+      run: jest.fn().mockReturnThis(),
+    }
+
+    ffmpegMock.mockReturnValue(ffmpegCommandMock as any)
+
+    // Mocking archiver as a function
+    const archiverMock = archiver as jest.MockedFunction<typeof archiver>
+    const archiveMock = {
+      pipe: jest.fn(),
+      directory: jest.fn(),
+      finalize: jest.fn(),
+    }
+
+    archiverMock.mockReturnValue(archiveMock as any)
+
+    // Mocking sendMail function
+    sendMailMock.mockResolvedValue(true)
+
+    // Calling the main function
+    const result = await main(event as any)  // Cast event to `any` to bypass the type check
+
+    expect(result).toBe(true)
+    expect(getObjectMock).toHaveBeenCalledWith({
+      Bucket: process.env.CLOUD_STORAGE_BUCKET,
+      Key: 'videos/video.mp4',
+    })
+    expect(fsMock.mkdirSync).toHaveBeenCalled()
+    expect(ffmpegMock).toHaveBeenCalled()
+    expect(archiveMock.finalize).toHaveBeenCalled()
+    expect(uploadMock).toHaveBeenCalled()
+    expect(sendMailMock).toHaveBeenCalledWith(expect.objectContaining({
+      Records: expect.arrayContaining([expect.objectContaining({
+        body: expect.objectContaining({
+          success: true,
+          signedUrl: 'https://signedurl.com',
+        }),
+      })]),
+    }))
+  })
+})
